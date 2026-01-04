@@ -8,9 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 gcp_secret = os.getenv("GCP_SECRET")
-project_id = os.getenv("PROJECT_ID")
+if gcp_secret:
+    gcp_secret = gcp_secret.strip()
 
-print(f"DEBUG: raw GCP_SECRET='{gcp_secret}', PROJECT_ID='{project_id}'")
+project_id = os.getenv("PROJECT_ID")
+if project_id:
+    project_id = project_id.strip()
+
+print(f"DEBUG: raw GCP_SECRET={repr(gcp_secret)}, PROJECT_ID={repr(project_id)}")
 
 if gcp_secret and not gcp_secret.startswith("projects/"):
     if project_id:
@@ -19,7 +24,7 @@ if gcp_secret and not gcp_secret.startswith("projects/"):
     else:
         print("WARNING: GCP_SECRET looks like a short name but PROJECT_ID is missing!")
 
-print(f"DEBUG: final GCP_SECRET='{gcp_secret}'")
+print(f"DEBUG: final GCP_SECRET={repr(gcp_secret)}")
 
 client = secretmanager.SecretManagerServiceClient()
 response = client.access_secret_version(name=gcp_secret)
