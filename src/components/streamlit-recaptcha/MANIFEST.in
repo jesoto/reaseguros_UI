@@ -1,0 +1,2 @@
+include recaptcha/frontend/build/*
+recursive-include recaptcha/frontend/build/static *

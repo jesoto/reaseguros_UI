@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+*$py.class
+testing.py
+*.env
+llm.json

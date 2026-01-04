@@ -1,0 +1,55 @@
+name: Deploy SINIESTROS VEHICULAR APP to ENVIRONMENT
+
+on:
+  workflow_dispatch:
+    inputs:
+      _ENVIRONMENT:
+        description: 'Environment name'
+        required: true
+        default: "dev"
+        type: choice
+        options:
+        - dev
+        - test
+        - prod
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Build
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: ${{ github.event.inputs._ENVIRONMENT }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Generate .env file
+      run: |
+        echo "Creating .env file for ${{ github.event.inputs._ENVIRONMENT }} environment"
+        echo "GCP_SECRET=${{ vars.GCP_SECRET }}" > .env
+        echo ".env file created successfully"
+      
+    - name: Verificar información de despliegue
+      run: |
+        echo "Deploying to ${{ github.event.inputs._ENVIRONMENT }} environment"
+        echo "Project ID: ${{ vars.PROJECT_ID }}"
+        echo "Registry: ${{ vars.CONT_REGISTRY_NAME }}"
+        echo "Repository: ${{ vars.CONT_REPOSITORY_NAME }}"
+        echo "Image name: ${{ vars.CONT_IMAGE_NAME }}"
+        echo "Region: ${{ vars.REGION }}"
+    
+    - name: Google Auth
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+    
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@v1'
+      
+    - name: Trigger Cloud Build
+      run: |
+        gcloud builds submit --project=${{ vars.PROJECT_ID }} \
+          --substitutions=_CONT_REGISTRY_NAME=${{ vars.CONT_REGISTRY_NAME }},_PROJECT_ID=${{ vars.PROJECT_ID }},_CONT_REPOSITORY_NAME=${{ vars.CONT_REPOSITORY_NAME }},_CONT_IMAGE_NAME=${{ vars.CONT_IMAGE_NAME }},_SERVICE_ACCOUNT=${{ vars.SERVICE_ACCOUNT }},_REGION=${{ vars.REGION }},_VPC_CONNECTOR=${{ vars.VPC_CONNECTOR }},_CPU=${{ vars.CPU }},_MEMORY=${{ vars.MEMORY }},_TIMEOUT=${{ vars.TIMEOUT }},_CONCURRENCY=${{ vars.CONCURRENCY }} \
+          --config=cloudbuild.yaml
